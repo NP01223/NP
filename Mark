@@ -1,3 +1,4 @@
+local LibrarySource = game:HttpGet("https://raw.githubusercontent.com/NP01223/NP/refs/heads/main/Mark%202", true)
 local LibrarySource = game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/Library.lua", true)
 
 local moveRight = 0
@@ -16,39 +17,35 @@ LibrarySource = LibrarySource:gsub(
 local Library = loadstring(LibrarySource)()
 Library:SetWatermarkVisibility(true)
 
-local FrameTimer = tick()
-local FrameCounter = 0
-local FPS = 60
+local plr = game.Players.LocalPlayer
 
-local WatermarkConnection = game:GetService("RunService").RenderStepped:Connect(function()
-    FrameCounter = FrameCounter + 1
-    if (tick() - FrameTimer) >= 1 then
-        FPS = FrameCounter
-        FrameTimer = tick()
-        FrameCounter = 0
+while task.wait() do
+    local character = plr.Character
+    if character and character:FindFirstChild("Humanoid") then
+        local humanoid = character.Humanoid
+        
+        local isheld = plr.IsHeld.Value
+        local inplot = plr.InPlot.Value
+
+        local ragdoll = humanoid:FindFirstChild("Ragdolled") and humanoid.Ragdolled.Value or false
+        local pd = humanoid:FindFirstChild("PaintDebounce") and humanoid.PaintDebounce.Value or false
+        local fd = humanoid:FindFirstChild("FireDebounce") and humanoid.FireDebounce.Value or false
+
+        local inpDP = inplot and "☑️" or "⬛"
+        local hDP = isheld and "☑️" or "⬛"
+        local rgdDP = ragdoll and "☑️" or "⬛"
+        local fdPD = fd and "☑️" or "⬛"
+        local pdPD = pd and "☑️" or "⬛"
+
+        
+		Library:SetWatermark(("InPlot = %s | IsHeld = %s | Ragdoll = %s | Burn = %s | Painted = %s"):format(
+			inpDP,
+            hDP,
+			rgdDP,
+            fdPD,
+            pdPD
+        ))
+    else
+        Library:SetWatermark("Loading character...")
     end
-
-    local Players = game:GetService("Players")
-    local totalPlayers = #Players:GetPlayers()
-    local friendsInServer = 0
-
-    for _, plr in ipairs(Players:GetPlayers()) do
-        local success, isFriend = pcall(function()
-            return Players.LocalPlayer:IsFriendsWith(plr.UserId)
-        end)
-        if success and isFriend then
-            friendsInServer = friendsInServer + 1
-        end
-    end
-
-    local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
-    local serverId = game.JobId
-
-    Library:SetWatermark(("Dummy | FPS: %s | Ping: %s | Players: %s | Friends: %s | Server Id: %s"):format(
-        FPS,
-        ping,
-        totalPlayers,
-        friendsInServer,
-        serverId
-    ))
-end)
+end
