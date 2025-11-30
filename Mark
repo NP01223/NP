@@ -1,4 +1,3 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/NP01223/NP/refs/heads/main/Mark%202"))()
 local LibrarySource = game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/Library.lua", true)
 
 local moveRight = 0
