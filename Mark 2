@@ -1,0 +1,52 @@
+local LibrarySource = game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/Library.lua", true)
+
+local moveRight = 0
+local moveLeft = 0
+local moveDown = 0
+local moveUp = 475
+
+local offsetX = moveRight - moveLeft
+local offsetY = moveDown - moveUp
+
+LibrarySource = LibrarySource:gsub(
+    'WatermarkBackground%.Position = UDim2%.fromOffset%(6, 6%)',
+    'WatermarkBackground.Position = UDim2.new(0.5, '..offsetX..', 0.5, '..offsetY..'); WatermarkBackground.AnchorPoint = Vector2.new(0.5, 0.5)'
+)
+
+local Library = loadstring(LibrarySource)()
+Library:SetWatermarkVisibility(true)
+
+local FrameTimer = tick()
+local FrameCounter = 0
+local FPS = 60
+
+local WatermarkConnection = game:GetService("RunService").RenderStepped:Connect(function()
+    FrameCounter = FrameCounter + 1
+    if (tick() - FrameTimer) >= 1 then
+        FPS = FrameCounter
+        FrameTimer = tick()
+        FrameCounter = 0
+    end
+
+    local Players = game:GetService("Players")
+    local totalPlayers = #Players:GetPlayers()
+    local friendsInServer = 0
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        local success, isFriend = pcall(function()
+            return Players.LocalPlayer:IsFriendsWith(plr.UserId)
+        end)
+        if success and isFriend then
+            friendsInServer = friendsInServer + 1
+        end
+    end
+
+    local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+
+    Library:SetWatermark(("FPS: %s | Ping: %s | Players: %s | Friends: %s"):format(
+        FPS,
+        ping,
+        totalPlayers,
+        friendsInServer
+    ))
+end)
