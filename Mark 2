@@ -14,7 +14,7 @@ LibrarySource = LibrarySource:gsub(
 )
 
 local Library = loadstring(LibrarySource)()
-Library:Library:AddDraggableLabel(true)
+Library:SetWatermarkVisibility(true)
 
 local FrameTimer = tick()
 local FrameCounter = 0
