@@ -14,7 +14,7 @@ LibrarySource = LibrarySource:gsub(
 )
 
 local Library = loadstring(LibrarySource)()
-Library:SetWatermarkVisibility(true)
+Library:Library:AddDraggableLabel(true)
 
 local plr = game.Players.LocalPlayer
 
